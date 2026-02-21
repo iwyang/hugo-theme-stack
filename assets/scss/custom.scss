@@ -116,17 +116,73 @@ a, button, input, textarea, select,
 }
 
 /* --- 图片 --- */
-.shuoshuo-image {
-    margin-top: 15px;
-    line-height: 0;
-    overflow: hidden;
-    border-radius: 8px;
-    cursor: zoom-in;
+/* 屏蔽多图模式下 Markdown 自动生成的换行符，防止打乱网格排版 */
+.shuoshuo-content p:has(.shuoshuo-image) br { 
+    display: none !important; 
+}
+
+/* =========================================
+   场景 A：只有 1 张图时（保持真实比例，居中）
+   ========================================= */
+.shuoshuo-content p:has(.shuoshuo-image:only-child),
+.shuoshuo-content p:has(img):not(:has(img ~ img)) {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+
+    .shuoshuo-image, > img {
+        margin-top: 0 !important;
+        display: block !important;
+        width: fit-content;
+        max-width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: zoom-in;
+        line-height: 0;
+    }
 
     img {
         transition: transform 0.4s ease;
-        display: block; width: 100%; object-fit: cover;
+        display: block; 
+        max-width: 100%; 
+        max-height: 350px; 
+        width: auto;       
+        height: auto;      
     }
+    
+    &:hover img { transform: scale(1.03); }
+}
+
+/* =========================================
+   场景 B：有 2 张及以上图片时（开启朋友圈九宫格模式）
+   ========================================= */
+.shuoshuo-content p:has(.shuoshuo-image:not(:only-child)),
+.shuoshuo-content p:has(img ~ img) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 强制 2 列等宽并排 */
+    gap: 10px; /* 图片之间的间距 */
+    margin-top: 10px;
+
+    .shuoshuo-image, > img {
+        margin-top: 0 !important;
+        display: block !important;
+        width: 100%;
+        aspect-ratio: 1 / 1; /* 【核心魔法】外部统一裁切为 1:1 正方形 */
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: zoom-in;
+        line-height: 0;
+    }
+
+    img {
+        transition: transform 0.4s ease;
+        display: block; 
+        width: 100%; 
+        height: 100%;
+        object-fit: cover; /* 居中提取画面核心，不拉伸挤压 */
+        object-position: center; 
+    }
+    
     &:hover img { transform: scale(1.03); }
 }
 
@@ -171,7 +227,7 @@ a, button, input, textarea, select,
 
 
 /* =================================================================
-   3. 首页通知条 (Notice Board)
+   3. 首页通知条 (Notice Board) - ★修复区域★
    ================================================================= */
 .notice-board-container {
     background: var(--card-background);
@@ -202,10 +258,48 @@ a, button, input, textarea, select,
     svg { width: 24px; height: 24px; }
 }
 
-.swiper.myNoticeSwiper { flex: 1; height: 54px !important; }
+.swiper.myNoticeSwiper { flex: 1; height: 54px !important; overflow: hidden; }
 .notice-slide { height: 54px !important; display: flex !important; align-items: center !important; width: 100% !important; outline: none; }
-.notice-link { display: flex !important; align-items: center !important; height: 100% !important; width: 100%; text-decoration: none; color: var(--card-text-color-main); cursor: inherit; outline: none; }
-.notice-text { font-size: 16px !important; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; display: block; margin-top: 1px; }
+
+/* 关键修复 1：整体改为 Flex 容器 */
+.notice-link { 
+    display: flex !important; 
+    align-items: center !important; 
+    height: 100% !important; 
+    width: 100%; 
+    text-decoration: none; 
+    color: var(--card-text-color-main); 
+    cursor: inherit; 
+    outline: none;
+    overflow: hidden;
+}
+
+/* 关键修复 2：允许文字缩小截断，但绝不占满 100% 宽度挤走图标 */
+.notice-text { 
+    font-size: 16px !important; 
+    line-height: 1.4; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    flex: 0 1 auto;  /* 重要：文字过长时可收缩截断 */
+}
+
+/* 关键修复 3：保证图标无论如何都不会被缩小或挤出可视范围 */
+.notice-media-icons {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;  /* 重要：绝对禁止缩小 */
+    gap: 6px;
+    margin-left: 6px;
+    color: var(--card-text-color-secondary); 
+}
+.notice-media-icons svg {
+    width: 1.25em;
+    height: 1.25em;
+    vertical-align: middle;
+    fill: currentColor;
+    opacity: 0.9;
+}
 
 /* 动态箭头 */
 @keyframes arrow-move { 0%, 100% { transform: translateX(0); opacity: 0.9; } 50% { transform: translateX(4px); opacity: 1; } }
