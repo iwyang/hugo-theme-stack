@@ -2,19 +2,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-    {{/* 获取最近的 10 条说说 */}}
-    {{ $shuoshuo := where .Site.RegularPages "Type" "shuoshuo" }}
-    {{ $latest_shuoshuo := $shuoshuo | first 10 }}
+    {{ $latest_shuoshuo := first 10 (where .Site.RegularPages "Type" "shuoshuo") }}
 
-    {{/* 只有当存在说说时才显示轮播条 */}}
     {{ if gt (len $latest_shuoshuo) 0 }}
     <div class="notice-board-container">
         <div class="notice-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-message-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-               <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-               <path d="M8 9h8"></path>
-               <path d="M8 13h6"></path>
-               <path d="M9 18h-3a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-3l-3 3l-3 -3z"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+               <path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M8 9h8"></path><path d="M8 13h6"></path><path d="M9 18h-3a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-3l-3 3l-3 -3z"></path>
             </svg>
         </div>
 
@@ -29,35 +23,22 @@
                             </span>：{{ .Plain | truncate 60 }}
                         </span>
                         
-                        {{/* 🌟 修复部分：精准区分音乐 iframe 和视频 iframe 🌟 */}}
-                        {{ $hasImg := or (findRE "(?i)<img" .Content) (findRE "(?i)!\\[" .RawContent) (findRE "(?i)\\{\\{<\\s*(gallery|image|img)" .RawContent) }}
+                        {{/* 核心优化：使用极速的 strings.Contains 替代大部分 findRE 正则，加速 Hugo 编译 */}}
+                        {{ $c := .Content }}{{ $r := .RawContent }}
+                        {{ $hasImg := or (strings.Contains $c "<img") (strings.Contains $r "![") (findRE "(?i)\\{\\{<\\s*(gallery|image|img)" $r) }}
+                        {{ $iframeCount := len (findRE "(?i)<iframe" $c) }}
+                        {{ $musicIframeCount := len (findRE "(?i)<iframe[^>]*music\\.163\\.com" $c) }}
                         
-                        {{/* 统计所有的 iframe 数量，以及包含 music.163.com 的音乐 iframe 数量 */}}
-                        {{ $iframeCount := len (findRE "(?i)<iframe" .Content) }}
-                        {{ $musicIframeCount := len (findRE "(?i)<iframe[^>]*music\\.163\\.com" .Content) }}
-                        
-                        {{/* 如果有 iframe 且数量多于音乐 iframe，或者包含 video 标签/短代码，则视为视频 */}}
-                        {{ $hasVid := or (findRE "(?i)<video" .Content) (findRE "(?i)\\{\\{<\\s*(video|bilibili|youtube)" .RawContent) (gt (sub $iframeCount $musicIframeCount) 0) }}
-                        
-                        {{/* 如果包含 audio 标签/短代码，或者有音乐 iframe，则视为音频 */}}
-                        {{ $hasAud := or (findRE "(?i)<audio" .Content) (findRE "(?i)\\{\\{<\\s*(music|netease|audio)" .RawContent) (gt $musicIframeCount 0) }}
-                        
-                        {{ $hasLnk := or (findRE "(?i)<a\\s" .Content) (findRE "(?i)\\[.*?\\]\\(http" .RawContent) }}
+                        {{ $hasVid := or (strings.Contains $c "<video") (findRE "(?i)\\{\\{<\\s*(video|bilibili|youtube)" $r) (gt (sub $iframeCount $musicIframeCount) 0) }}
+                        {{ $hasAud := or (strings.Contains $c "<audio") (findRE "(?i)\\{\\{<\\s*(music|netease|audio)" $r) (gt $musicIframeCount 0) }}
+                        {{ $hasLnk := or (strings.Contains $c "<a ") (strings.Contains $r "](http") }}
                         
                         {{ if or $hasImg $hasVid $hasAud $hasLnk }}
                         <span class="notice-media-icons">
-                            {{ if $hasImg }}
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM323.8 202.5c-4.5-6.6-11.9-10.5-19.8-10.5s-15.4 3.9-19.8 10.5l-87 127.6L170.7 297c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6h96 32H424c8.9 0 17.1-4.9 21.2-12.8s3.6-17.4-1.4-24.7l-120-176zM112 192a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"/></svg>
-                            {{ end }}
-                            {{ if $hasVid }}
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M0 128C0 92.7 28.7 64 64 64H320c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128zM559.1 99.8c10.4 5.6 16.9 16.4 16.9 28.2V384c0 11.8-6.5 22.6-16.9 28.2s-23 5-32.9-1.6l-96-64L416 337.1V320 192 174.9l14.2-9.5 96-64c9.8-6.5 22.5-7.2 32.9-1.6z"/></svg>
-                            {{ end }}
-                            {{ if $hasAud }}
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M499.1 6.3c8.1 6 12.9 15.6 12.9 25.7v72V368c0 44.2-43 80-96 80s-96-35.8-96-80s43-80 96-80c11.2 0 22 1.6 32 4.6V147L192 223.8V432c0 44.2-43 80-96 80s-96-35.8-96-80s43-80 96-80c11.2 0 22 1.6 32 4.6V200 128c0-14.1 9.3-26.6 22.8-30.7l320-96c9.7-2.9 20.2-1.1 27.5 5z"/></svg>
-                            {{ end }}
-                            {{ if $hasLnk }}
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M579.8 267.7c56.5-56.5 56.5-148 0-204.5c-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6c31.5 31.5 31.5 82.6 0 114.1L511.6 245.8c-31.5 31.5-82.6 31.5-114.1 0c-11.3-11.3-30.1-11.3-41.4 0s-11.3 30.1 0 41.4c52.2 52.2 136.6 52.2 188.8 0L579.8 267.7zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5c50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5L128.4 266.2c31.5-31.5 82.6-31.5 114.1 0c11.3 11.3 30.1 11.3 41.4 0s11.3-30.1 0-41.4c-52.2-52.2-136.6-52.2-188.8 0L60.2 244.3zM352 160c17.7 0 32 14.3 32 32v128c0 17.7-14.3 32-32 32s-32-14.3-32-32V192c0-17.7 14.3-32 32-32z"/></svg>
-                            {{ end }}
+                            {{ if $hasImg }}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM323.8 202.5c-4.5-6.6-11.9-10.5-19.8-10.5s-15.4 3.9-19.8 10.5l-87 127.6L170.7 297c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6h96 32H424c8.9 0 17.1-4.9 21.2-12.8s3.6-17.4-1.4-24.7l-120-176zM112 192a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"/></svg>{{ end }}
+                            {{ if $hasVid }}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M0 128C0 92.7 28.7 64 64 64H320c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128zM559.1 99.8c10.4 5.6 16.9 16.4 16.9 28.2V384c0 11.8-6.5 22.6-16.9 28.2s-23 5-32.9-1.6l-96-64L416 337.1V320 192 174.9l14.2-9.5 96-64c9.8-6.5 22.5-7.2 32.9-1.6z"/></svg>{{ end }}
+                            {{ if $hasAud }}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M499.1 6.3c8.1 6 12.9 15.6 12.9 25.7v72V368c0 44.2-43 80-96 80s-96-35.8-96-80s43-80 96-80c11.2 0 22 1.6 32 4.6V147L192 223.8V432c0 44.2-43 80-96 80s-96-35.8-96-80s43-80 96-80c11.2 0 22 1.6 32 4.6V200 128c0-14.1 9.3-26.6 22.8-30.7l320-96c9.7-2.9 20.2-1.1 27.5 5z"/></svg>{{ end }}
+                            {{ if $hasLnk }}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M579.8 267.7c56.5-56.5 56.5-148 0-204.5c-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6c31.5 31.5 31.5 82.6 0 114.1L511.6 245.8c-31.5 31.5-82.6 31.5-114.1 0c-11.3-11.3-30.1-11.3-41.4 0s-11.3 30.1 0 41.4c52.2 52.2 136.6 52.2 188.8 0L579.8 267.7zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5c50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5L128.4 266.2c31.5-31.5 82.6-31.5 114.1 0c11.3 11.3 30.1 11.3 41.4 0s11.3-30.1 0-41.4c-52.2-52.2-136.6-52.2-188.8 0L60.2 244.3zM352 160c17.7 0 32 14.3 32 32v128c0 17.7-14.3 32-32 32s-32-14.3-32-32V192c0-17.7 14.3-32 32-32z"/></svg>{{ end }}
                         </span>
                         {{ end }}
                     </a>
@@ -67,21 +48,15 @@
         </div>
         
         <div class="notice-arrow">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                <polyline points="9 6 15 12 9 18" />
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="9 6 15 12 9 18" /></svg>
         </div>
     </div>
     {{ end }}
 
-    {{/* 获取文章列表（排除说说） */}}
-    {{ $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections }}
-    {{ $pages = where $pages "Type" "!=" "shuoshuo" }}
-    
     <section class="article-list">
-        {{ $paginator := .Paginate $pages }}
-        {{ range $paginator.Pages }}
+        {{ $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections }}
+        {{ $pages = where $pages "Type" "!=" "shuoshuo" }}
+        {{ range (.Paginate $pages).Pages }}
             {{ partial "article-list/default" . }}
         {{ end }}
     </section>
@@ -90,62 +65,31 @@
     {{ partial "footer/footer" . }}
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // 1. 初始化 Swiper
+        document.addEventListener('DOMContentLoaded', () => {
             if (typeof Swiper !== 'undefined') {
                 new Swiper(".myNoticeSwiper", {
-                    direction: 'vertical',
-                    slidesPerView: 1,
-                    spaceBetween: 0,
-                    allowTouchMove: true,
-                    mousewheel: true,
-                    autoplay: {
-                        delay: 2000,
-                        disableOnInteraction: false,
-                        pauseOnMouseEnter: true, // 【功能点1】鼠标悬停时停止自动播放
-                    },
-                    loop: true,
+                    direction: 'vertical', slidesPerView: 1, spaceBetween: 0,
+                    allowTouchMove: true, mousewheel: true, loop: true,
+                    autoplay: { delay: 2000, disableOnInteraction: false, pauseOnMouseEnter: true },
                 });
             }
 
-            // 2. 首页轮播时间计算逻辑
-            const timeElements = document.querySelectorAll('.notice-time-ago');
             const now = new Date();
-
-            timeElements.forEach(el => {
+            document.querySelectorAll('.notice-time-ago').forEach(el => {
                 const dateStr = el.getAttribute('datetime');
-                if (!dateStr) return; // 防止报错
+                if (!dateStr) return;
                 const date = new Date(dateStr);
-                const diff = (now - date) / 1000; // 差距秒数
+                const diff = (now - date) / 1000;
 
-                // ===== 【功能点3】生成“年月日 时分”格式 =====
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hour = String(date.getHours()).padStart(2, '0');
-                const minute = String(date.getMinutes()).padStart(2, '0');
-                const exactTime = year + '-' + month + '-' + day + ' ' + hour + ':' + minute;
-
-                // 设置 title 属性 (实现鼠标悬停显示具体时间)
+                const exactTime = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
                 el.setAttribute('title', exactTime);
 
-                // ===== 【功能点2】强制纯相对时间逻辑 =====
-                let text = ''; 
-                
-                if (diff < 60) {
-                    text = '刚刚';
-                } else if (diff < 3600) {
-                    text = Math.floor(diff / 60) + ' 分钟前';
-                } else if (diff < 86400) {
-                    text = Math.floor(diff / 3600) + ' 小时前';
-                } else if (diff < 2592000) { 
-                    text = Math.floor(diff / 86400) + ' 天前';
-                } else if (diff < 31536000) { 
-                    text = Math.floor(diff / 2592000) + ' 个月前';
-                } else {
-                    // 超过一年，强制显示“X年前”，不再显示具体日期
-                    text = Math.floor(diff / 31536000) + ' 年前';
-                }
+                let text = '刚刚';
+                if (diff >= 31536000) text = Math.floor(diff / 31536000) + ' 年前';
+                else if (diff >= 2592000) text = Math.floor(diff / 2592000) + ' 个月前';
+                else if (diff >= 86400) text = Math.floor(diff / 86400) + ' 天前';
+                else if (diff >= 3600) text = Math.floor(diff / 3600) + ' 小时前';
+                else if (diff >= 60) text = Math.floor(diff / 60) + ' 分钟前';
                 
                 el.innerText = text;
             });
