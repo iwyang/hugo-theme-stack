@@ -33,6 +33,17 @@
 
     {{ $pages := partial "helper/pages.html" .Site.Home }}
 
+    {{ if $pages }}
+    <div class="archives-group">
+        <h2 class="section-title">{{ T "widget.recent.title" | default "最近更新" }}</h2>
+        <div class="article-list--compact">
+            {{ range first 4 $pages.ByLastmod.Reverse }}
+                {{ partial "article-list/compact" . }}
+            {{ end }}
+        </div>
+    </div>
+    {{ end }}
+
     {{ range $pages.GroupByDate "2006" }}
     {{ $id := lower (replace .Key " " "-") }}
     <div class="archives-group" id="{{ $id }}">
