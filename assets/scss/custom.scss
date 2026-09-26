@@ -161,8 +161,14 @@
         background: var(--card-background); color: var(--card-text-color-secondary);
         font-size: 14px; text-decoration: none; transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid transparent;
+        cursor: pointer !important; /* 👈 强制所有状态显示小手 */
+        pointer-events: auto !important; /* 👈 强制允许所有点击事件 */
         &:hover { color: #1e90ff; border-color: #1e90ff; }
-        &.active { background: #1e90ff; color: #fff !important; border-color: #1e90ff; box-shadow: 0 4px 8px rgba(30,144,255,0.3); }
+        &.active { 
+            background: #1e90ff; color: #fff !important; border-color: #1e90ff; box-shadow: 0 4px 8px rgba(30,144,255,0.3); 
+            cursor: pointer !important; /* 👈 针对 active 状态强制小手 */
+            pointer-events: auto !important; /* 👈 彻底覆盖主题底层的 pointer-events: none */
+        }
         .tag-count { margin-left: 4px; font-size: 12px; opacity: 0.9; }
     }
 }
