@@ -1,0 +1,47 @@
+<article>
+    <a href="{{ .RelPermalink }}">
+        <div class="article-details">
+            <h2 class="article-title">
+                {{- .Title -}}
+            </h2>
+            <footer class="article-time">
+                <time datetime='{{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" }}' title='更新于 {{ .Lastmod.Format "2006-01-02 15:04" }}'>
+                    {{ .Lastmod.Format "2006-01-02" }} 更新
+                </time>
+                <script>
+                    (function() {
+                        var el = document.currentScript.previousElementSibling;
+                        var dateStr = el.getAttribute('datetime');
+                        if (!dateStr) return;
+                        
+                        var date = new Date(dateStr);
+                        var diff = (new Date() - date) / 1000;
+                        
+                        var text = '刚刚更新';
+                        if (diff >= 31536000) {
+                            text = Math.floor(diff / 31536000) + ' 年前更新';
+                        } else if (diff >= 2592000) {
+                            text = Math.floor(diff / 2592000) + ' 个月前更新';
+                        } else if (diff >= 86400) {
+                            text = Math.floor(diff / 86400) + ' 天前更新';
+                        } else if (diff >= 3600) {
+                            text = Math.floor(diff / 3600) + ' 小时前更新';
+                        } else if (diff >= 60) {
+                            text = Math.floor(diff / 60) + ' 分钟前更新';
+                        }
+                        
+                        el.innerText = text;
+                    })();
+                </script>
+            </footer>
+        </div>
+
+        {{- $image := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources) -}}
+        {{ if $image }}
+        <div class="article-image">
+            <img src="{{ $image.Permalink }}" width="{{ $image.Width }}" height="{{ $image.Height }}" alt="{{ .Title }}"
+                loading="lazy">
+        </div>
+        {{ end }}
+    </a>
+</article>

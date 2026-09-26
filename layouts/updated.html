@@ -1,0 +1,17 @@
+{{ define "body-class" }}template-archives{{ end }}
+{{ define "main" }}
+    <div class="archives-group">
+        <h2 class="section-title">{{ .Title }}</h2>
+        
+        <div class="article-list--compact">
+            {{ $pages := partial "helper/pages.html" .Site.Home }}
+            
+            {{/* 强制按最后修改时间倒序排列 */}}
+            {{ range sort $pages "Lastmod" "desc" }}
+                {{ partial "article-list/compact-updated" . }}
+            {{ end }}
+        </div>
+    </div>
+
+    {{ partialCached "footer/footer" . }}
+{{ end }}

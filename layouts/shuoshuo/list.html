@@ -63,7 +63,7 @@
                 {{ end }}
             </div>
 
-            <div class="shuoshuo-list" id="masonry-container" style="opacity: 0; transition: opacity 0.4s ease;">
+            <div class="shuoshuo-list" id="masonry-container" style="opacity: 0; transition: opacity 0.15s ease;">
                 {{ $paginator := .Paginate .Pages }}
                 <div class="waterfall-column" id="waterfall-left">
                     {{ range $paginator.Pages }}
@@ -193,7 +193,7 @@
                     });
                     
                     applyMasonryLayout(); // 此时所有该折叠的长说说都已经有了 class，再执行布局和透明度展现
-                }, 50);
+                }, 10); // ✨ 修改点 2：这里从 50 改为了 10，减少 JS 阻塞等待时间
 
                 const images = masonryContainer.querySelectorAll('img');
                 if (images.length > 0) {

@@ -37,8 +37,21 @@
     <div class="archives-group">
         <h2 class="section-title">{{ T "widget.recent.title" | default "最近更新" }}</h2>
         <div class="article-list--compact">
-            {{ range first 4 $pages.ByLastmod.Reverse }}
-                {{ partial "article-list/compact" . }}
+            
+            {{ range first 3 (sort $pages "Lastmod" "desc") }}
+                {{ partial "article-list/compact-updated" . }}
+            {{ end }}
+            
+            {{ if gt (len $pages) 3 }}
+            <article>
+                <a href="{{ "updated/" | relLangURL }}" style="display: flex; align-items: center; width: 100%; min-height: 90px; text-decoration: none;">
+                    <div class="article-details">
+                        <h2 class="article-title" style="margin: 0;">
+                            更多...
+                        </h2>
+                    </div>
+                </a>
+            </article>
             {{ end }}
         </div>
     </div>

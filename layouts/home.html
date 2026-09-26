@@ -82,7 +82,8 @@
                 const diff = (now - date) / 1000;
 
                 const exactTime = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-                el.setAttribute('title', exactTime);
+                // 修改点：在此处拼接了“发布于 ”
+                el.setAttribute('title', '发布于 ' + exactTime);
 
                 let text = '刚刚';
                 if (diff >= 31536000) text = Math.floor(diff / 31536000) + ' 年前';
